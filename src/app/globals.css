@@ -1,26 +1,57 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  /* drain't grunge palette — distressed, raw, security-themed */
+  --color-grunge-paper: #f4ede4;
+  --color-grunge-ink: #1a1611;
+  --color-grunge-blood: #7d2027;
+  --color-grunge-olive: #4a5d23;
+  --color-grunge-sepia: #8b6f47;
+  --color-grunge-mustard: #d4ae53;
+  --color-grunge-redact: #0d0a08;
+
+  /* Type system */
+  --font-display: "Permanent Marker", cursive;
+  --font-sans: "Special Elite", monospace;
+  --font-serif: "Courier Prime", serif;
+  --font-mono: "Courier Prime", monospace;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+@layer base {
+  html {
+    background-color: var(--color-grunge-paper);
+  }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  body {
+    background-color: var(--color-grunge-paper);
+    color: var(--color-grunge-ink);
+    font-family: var(--font-sans);
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3CfeColorMatrix values='0 0 0 0 0.1 0 0 0 0 0.08 0 0 0 0 0.06 0 0 0 0.15 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    letter-spacing: 0.01em;
+  }
+
+  *::selection {
+    background: var(--color-grunge-blood);
+    color: var(--color-grunge-paper);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@keyframes grunge-jitter {
+  0%, 100% { transform: translate(0, 0); }
+  20% { transform: translate(-0.5px, 0.5px); }
+  40% { transform: translate(0.5px, -0.5px); }
+  60% { transform: translate(-0.5px, -0.5px); }
+  80% { transform: translate(0.5px, 0.5px); }
+}
+
+.grunge-jitter {
+  animation: grunge-jitter 0.3s steps(1) infinite;
+}
+
+.grunge-jitter:hover {
+  animation: none;
 }
