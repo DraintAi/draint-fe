@@ -1,0 +1,33 @@
+{
+  "version": "0.1.0",
+  "description": "drain't — Pre-sign warning against EIP-7702 delegation drainers and Permit phishing. Wallet drain? Didn't happen.",
+  "proposedName": "drain't",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DraintAi/draint-fe.git"
+  },
+  "source": {
+    "shasum": "xBx5axGl4GOrEfYheQclTnjtj1fybHXeIdE7NbytQ5g=",
+    "location": {
+      "npm": {
+        "filePath": "dist/bundle.js",
+        "iconPath": "images/icon.svg",
+        "packageName": "@draint/snap",
+        "registry": "https://registry.npmjs.org/"
+      }
+    }
+  },
+  "initialPermissions": {
+    "endowment:signature-insight": {
+      "allowSignatureOrigin": true
+    },
+    "endowment:transaction-insight": {
+      "allowTransactionOrigin": true
+    },
+    "endowment:network-access": {},
+    "snap_dialog": {},
+    "snap_manageState": {}
+  },
+  "platformVersion": "10.3.0",
+  "manifestVersion": "0.1"
+}
