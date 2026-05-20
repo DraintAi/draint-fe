@@ -1,24 +1,31 @@
-// drain't MetaMask Snap — pre-sign warning against EIP-7702 delegation
-// drainers and Permit/Permit2 phishing.
+// drain't MetaMask Snap entry point.
 //
-// Two intercept points:
-//   1. onSignature   — catches typed-data (Permit/Permit2) phishing
-//   2. onTransaction — catches type 0x04 EIP-7702 txs that include
-//                      authorizationList to malicious delegation targets
+// Handlers:
+//   onSignature   — Permit / Permit2 phishing detection
+//   onTransaction — EIP-7702 type 0x04 SET_CODE detection
+//   onRpcRequest  — manual classify method for test harness / SDK
+//   onHomePage    — drain't status panel in MM Settings → Snaps
 
 import type {
+  OnHomePageHandler,
+  OnRpcRequestHandler,
   OnSignatureHandler,
   OnTransactionHandler,
   SeverityLevel,
 } from "@metamask/snaps-sdk";
 
 import { classifyAddress, type ClassifyResult } from "./api";
-import { extractPermitTargets } from "./permit";
 import { extractAuthorizationTargets } from "./eip7702";
-import { renderWarning, renderSafePanel } from "./ui";
+import { extractPermitTargets } from "./permit";
+import { getState, pushAlert } from "./state";
+import {
+  renderClassifyResult,
+  renderHome,
+  renderSafePanel,
+  renderWarning,
+} from "./ui";
 
 // ─── onSignature ─────────────────────────────────────────────────────
-// Permit / Permit2 phishing detection.
 
 export const onSignature: OnSignatureHandler = async ({
   signature,
@@ -50,6 +57,18 @@ export const onSignature: OnSignatureHandler = async ({
     return null;
   }
 
+  await pushAlert({
+    kind: "permit",
+    origin: signatureOrigin ?? null,
+    verdict: {
+      target: verdict.target,
+      chainId: verdict.chainId,
+      riskScore: verdict.riskScore,
+      severity: verdict.severity,
+      matchedPattern: verdict.matchedPattern,
+    },
+  }).catch(() => {});
+
   return {
     severity: (verdict.severity === "critical"
       ? "critical"
@@ -58,13 +77,12 @@ export const onSignature: OnSignatureHandler = async ({
       "Suspicious Permit signature",
       `You're granting spending permission to ${target}.`,
       verdict,
-      signatureOrigin,
+      signatureOrigin ?? null,
     ),
   };
 };
 
 // ─── onTransaction ───────────────────────────────────────────────────
-// EIP-7702 SET_CODE detection.
 
 export const onTransaction: OnTransactionHandler = async ({
   transaction,
@@ -84,9 +102,8 @@ export const onTransaction: OnTransactionHandler = async ({
     ),
   );
 
-  const worst = verdicts
-    .filter((v): v is ClassifyResult => v !== null)
-    .sort((a, b) => b.riskScore - a.riskScore)[0];
+  const valid = verdicts.filter((v): v is ClassifyResult => v !== null);
+  const worst = [...valid].sort((a, b) => b.riskScore - a.riskScore)[0];
 
   if (!worst || worst.severity === "safe") {
     return renderSafePanel(targets.length);
@@ -96,6 +113,18 @@ export const onTransaction: OnTransactionHandler = async ({
     return null;
   }
 
+  await pushAlert({
+    kind: "tx-7702",
+    origin: transactionOrigin ?? null,
+    verdict: {
+      target: worst.target,
+      chainId: worst.chainId,
+      riskScore: worst.riskScore,
+      severity: worst.severity,
+      matchedPattern: worst.matchedPattern,
+    },
+  }).catch(() => {});
+
   return {
     severity: (worst.severity === "critical"
       ? "critical"
@@ -104,17 +133,82 @@ export const onTransaction: OnTransactionHandler = async ({
       "EIP-7702 delegation drainer suspected",
       `This tx delegates your wallet's execution to ${worst.target}.`,
       worst,
-      transactionOrigin,
+      transactionOrigin ?? null,
     ),
   };
 };
 
+// ─── onRpcRequest ────────────────────────────────────────────────────
+// Test harness / SDK entry — dApps invoke via wallet_invokeSnap.
+
+export const onRpcRequest: OnRpcRequestHandler = async ({ request, origin }) => {
+  switch (request.method) {
+    case "classify": {
+      const params = request.params as
+        | { chainId?: number; target?: string }
+        | undefined;
+      if (!params?.target || !params?.chainId) {
+        throw new Error(
+          "classify requires { chainId: number, target: 0x... }",
+        );
+      }
+
+      const verdict = await classifyAddress(params.chainId, params.target);
+
+      await pushAlert({
+        kind: "manual",
+        origin: origin ?? null,
+        verdict: {
+          target: verdict.target,
+          chainId: verdict.chainId,
+          riskScore: verdict.riskScore,
+          severity: verdict.severity,
+          matchedPattern: verdict.matchedPattern,
+        },
+      }).catch(() => {});
+
+      // Show classification dialog AND return the verdict
+      await snap.request({
+        method: "snap_dialog",
+        params: {
+          type: "alert",
+          content: renderClassifyResult(verdict),
+        },
+      });
+
+      return verdict;
+    }
+
+    case "getAlerts": {
+      const state = await getState();
+      return state.alerts;
+    }
+
+    case "clearAlerts": {
+      await snap.request({
+        method: "snap_manageState",
+        params: { operation: "update", newState: { alerts: [] } },
+      });
+      return { ok: true };
+    }
+
+    default:
+      throw new Error(`Method not supported: ${request.method}`);
+  }
+};
+
+// ─── onHomePage ──────────────────────────────────────────────────────
+// Status panel shown when user opens drain't in MM Settings → Snaps.
+
+export const onHomePage: OnHomePageHandler = async () => {
+  const state = await getState();
+  return { content: renderHome(state.alerts) };
+};
+
+// ─── helpers ─────────────────────────────────────────────────────────
+
 function parseChainId(chainId: string): number {
-  if (chainId.startsWith("eip155:")) {
-    return Number(chainId.slice(7));
-  }
-  if (chainId.startsWith("0x")) {
-    return Number.parseInt(chainId, 16);
-  }
+  if (chainId.startsWith("eip155:")) return Number(chainId.slice(7));
+  if (chainId.startsWith("0x")) return Number.parseInt(chainId, 16);
   return Number(chainId) || 1;
 }

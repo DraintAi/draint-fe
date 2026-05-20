@@ -4,8 +4,9 @@
 // In prod the endpoint comes from snap.manifest.json env (TBD), for now hardcoded.
 
 const DRAINT_API_BASE =
-  // @ts-expect-error — Snap globals
-  (typeof snap !== "undefined" && (snap as any).env?.DRAINT_API_BASE) ||
+  (typeof (globalThis as Record<string, unknown>).snap !== "undefined" &&
+    ((globalThis as { snap?: { env?: { DRAINT_API_BASE?: string } } }).snap
+      ?.env?.DRAINT_API_BASE)) ||
   "https://draint-be.vercel.app";
 
 export interface ClassifyResult {
