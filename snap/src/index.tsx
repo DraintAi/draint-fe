@@ -89,12 +89,23 @@ export const onTransaction: OnTransactionHandler = async ({
   transactionOrigin,
   chainId,
 }) => {
-  const targets = extractAuthorizationTargets(
-    transaction as unknown as Record<string, unknown>,
-  );
-  if (targets.length === 0) return null;
-
+  const txObj = transaction as unknown as Record<string, unknown>;
   const numericChainId = parseChainId(chainId);
+
+  // Two intercept paths:
+  //  1. EIP-7702 SET_CODE — extract every delegation target from authList
+  //  2. Plain tx — classify the call target (`tx.to`) for known drainers
+  const authTargets = extractAuthorizationTargets(txObj);
+  const txTo =
+    typeof txObj.to === "string" && /^0x[a-fA-F0-9]{40}$/.test(txObj.to)
+      ? (txObj.to.toLowerCase() as `0x${string}`)
+      : null;
+
+  const targets: `0x${string}`[] = Array.from(
+    new Set([...authTargets, ...(txTo ? [txTo] : [])]),
+  ) as `0x${string}`[];
+
+  if (targets.length === 0) return null;
 
   const verdicts = await Promise.all(
     targets.map((t) =>
@@ -125,16 +136,21 @@ export const onTransaction: OnTransactionHandler = async ({
     },
   }).catch(() => {});
 
+  // Determine messaging — was the worst target a 7702 delegation target
+  // or simply the tx call target? Different copy for each.
+  const isDelegationTarget = authTargets.includes(worst.target);
+  const title = isDelegationTarget
+    ? "EIP-7702 delegation drainer suspected"
+    : "Drainer contract suspected";
+  const context = isDelegationTarget
+    ? `This tx delegates your wallet's execution to ${worst.target}.`
+    : `This tx calls ${worst.target}, classified as a known drainer.`;
+
   return {
     severity: (worst.severity === "critical"
       ? "critical"
       : "warning") as SeverityLevel,
-    content: renderWarning(
-      "EIP-7702 delegation drainer suspected",
-      `This tx delegates your wallet's execution to ${worst.target}.`,
-      worst,
-      transactionOrigin ?? null,
-    ),
+    content: renderWarning(title, context, worst, transactionOrigin ?? null),
   };
 };
 

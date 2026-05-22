@@ -89,7 +89,50 @@ export default function HoneypotPage() {
     }
   }
 
+  // ─── Generic tx interception (no 7702 needed) ────────────────────
+  //
+  // drain't's onTransaction handler classifies `tx.to` regardless of tx
+  // type. We send a value-0 self-cost tx that just calls the target —
+  // any incoming SETH would be drained by CrimeEnjoyorMock's fallback,
+  // but value=0 means nothing to drain. Just triggers the warning.
+
+  async function sendTx(label: string, target: `0x${string}`): Promise<void> {
+    if (!walletClient || !address) return;
+    setBusy(label);
+    try {
+      const hash = await walletClient.sendTransaction({
+        to: target,
+        value: BigInt(0),
+        data: "0x",
+      });
+      logResult({
+        label,
+        kind: "ok",
+        message: `tx submitted: ${hash}`,
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      const rejected =
+        msg.toLowerCase().includes("user rejected") ||
+        msg.toLowerCase().includes("user denied");
+      logResult({
+        label,
+        kind: rejected ? "blocked" : "error",
+        message: rejected
+          ? "User rejected the tx (drain't warning likely surfaced)"
+          : msg.slice(0, 240),
+      });
+    } finally {
+      setBusy(null);
+    }
+  }
+
   // ─── EIP-7702 authorization + type-0x04 tx ────────────────────────
+  // EXPERIMENTAL — viem's signAuthorization requires a local privateKey
+  // account; MM JSON-RPC doesn't support it as of 2026-05. Keep button as
+  // documentation of the intended flow; will work once MM stabilizes
+  // wallet_signAuthorization. Snap's onTransaction handler is already
+  // wired to inspect authorizationList — see snap/src/eip7702.ts.
 
   async function send7702(
     label: string,
@@ -98,23 +141,15 @@ export default function HoneypotPage() {
     if (!walletClient || !address) return;
     setBusy(label);
     try {
-      // 1. Sign the authorization that delegates the EOA's code to `target`.
-      //    viem's signAuthorization routes through the wallet (MetaMask Flask
-      //    should support `wallet_signAuthorization` in 2026 builds).
       const auth = await walletClient.signAuthorization({
         contractAddress: target,
         executor: "self",
       });
-
-      // 2. Submit a type-0x04 tx that includes the authorization.
-      //    The tx itself is a no-op self-call — the side effect (the
-      //    delegation upgrade) lives in the authorizationList.
       const hash = await walletClient.sendTransaction({
         authorizationList: [auth],
         to: address,
         data: "0x",
       });
-
       logResult({
         label,
         kind: "ok",
@@ -128,14 +163,15 @@ export default function HoneypotPage() {
       const unsupported =
         msg.toLowerCase().includes("not supported") ||
         msg.toLowerCase().includes("unknown method") ||
-        msg.toLowerCase().includes("method not");
+        msg.toLowerCase().includes("method not") ||
+        msg.toLowerCase().includes("does not");
       logResult({
         label,
         kind: rejected ? "blocked" : "error",
         message: rejected
           ? "User rejected the 7702 tx (drain't warning likely surfaced)"
           : unsupported
-            ? `7702 not yet supported by this wallet build (${msg.slice(0, 80)})`
+            ? `7702 signing not yet exposed by MM Flask. drain't Snap's onTransaction handler is ready (see /honeypot footer).`
             : msg.slice(0, 240),
       });
     } finally {
@@ -210,32 +246,69 @@ export default function HoneypotPage() {
         </div>
       </section>
 
-      {/* ─── 7702 triggers ───────────────────────────────────────── */}
+      {/* ─── Generic tx triggers (no 7702 needed) ────────────────── */}
       <section className="mb-10">
         <div className="text-xs uppercase tracking-widest text-grunge-sepia mb-3">
-          Test B · EIP-7702 SET_CODE transaction (tx type 0x04)
+          Test B · Plain transaction to a target
         </div>
         <p className="font-serif text-sm mb-4 max-w-2xl">
-          Signs a 7702 authorization that delegates your EOA&rsquo;s code to
-          a target contract, then sends a self-call tx that includes the
-          authorization. MM&rsquo;s <code className="font-mono">onTransaction
-          </code> insight fires; drain&rsquo;t inspects the authorization list.
+          Sends a value-0 tx to a target contract. MM&rsquo;s{" "}
+          <code className="font-mono">onTransaction</code> insight fires;
+          drain&rsquo;t classifies <code className="font-mono">tx.to</code>{" "}
+          and warns if it&rsquo;s a known drainer-shaped contract. Value=0
+          so nothing actually drains even on the &ldquo;malicious&rdquo; run.
         </p>
         <div className="grid sm:grid-cols-2 gap-3">
           <TriggerCard
             severity="ok"
             disabled={!onSepolia || busy !== null}
+            busy={busy === "tx-safe"}
+            label="Call drain't enforcer (safe)"
+            help={`tx.to = ${shortAddr(DRAINT_ENFORCER)} — our verified caveat enforcer. Expect 'drain't verified ✓'.`}
+            onClick={() => sendTx("tx-safe", DRAINT_ENFORCER)}
+          />
+          <TriggerCard
+            severity="danger"
+            disabled={!onSepolia || busy !== null}
+            busy={busy === "tx-drainer"}
+            label="Call CrimeEnjoyorMock 🚨"
+            help={`tx.to = ${shortAddr(CRIME_ENJOYOR_MOCK)}. Expect drain't critical: 'Drainer contract suspected'.`}
+            onClick={() => sendTx("tx-drainer", CRIME_ENJOYOR_MOCK)}
+          />
+        </div>
+      </section>
+
+      {/* ─── Experimental 7702 ───────────────────────────────────── */}
+      <section className="mb-10">
+        <div className="text-xs uppercase tracking-widest text-grunge-sepia mb-3">
+          Test B&apos; · EIP-7702 SET_CODE (experimental)
+        </div>
+        <div className="p-3 bg-grunge-mustard/30 border border-grunge-ink/40 mb-4 font-serif text-xs">
+          ⚠ EIP-7702 authorization signing from a JSON-RPC wallet (MetaMask)
+          isn&rsquo;t stable yet — viem requires a local privateKey account,
+          and MM Flask hasn&rsquo;t exposed{" "}
+          <code className="font-mono">wallet_signAuthorization</code>{" "}
+          publicly. drain&rsquo;t&rsquo;s{" "}
+          <code className="font-mono">onTransaction</code> handler already
+          inspects <code className="font-mono">authorizationList</code>{" "}
+          (see <code className="font-mono">snap/src/eip7702.ts</code>) — the
+          buttons below will start working the moment MM ships the RPC.
+        </div>
+        <div className="grid sm:grid-cols-2 gap-3 opacity-70">
+          <TriggerCard
+            severity="ok"
+            disabled={!onSepolia || busy !== null}
             busy={busy === "7702-safe"}
-            label="Send 7702 tx · target = drain't enforcer (safe)"
-            help={`Delegating to ${shortAddr(DRAINT_ENFORCER)} — our verified caveat enforcer. Expect drain't safe panel.`}
+            label="Send 7702 tx · target = drain't enforcer"
+            help={`Delegating to ${shortAddr(DRAINT_ENFORCER)}. Currently expected to error 'json-rpc not supported'.`}
             onClick={() => send7702("7702-safe", DRAINT_ENFORCER)}
           />
           <TriggerCard
             severity="danger"
             disabled={!onSepolia || busy !== null}
             busy={busy === "7702-drainer"}
-            label="Send 7702 tx · target = CrimeEnjoyorMock 🚨"
-            help={`Delegating to ${shortAddr(CRIME_ENJOYOR_MOCK)}. Expect drain't critical warning.`}
+            label="Send 7702 tx · target = CrimeEnjoyorMock"
+            help={`Delegating to ${shortAddr(CRIME_ENJOYOR_MOCK)}. Will work once wallet API stabilizes.`}
             onClick={() => send7702("7702-drainer", CRIME_ENJOYOR_MOCK)}
           />
         </div>
