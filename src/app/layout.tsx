@@ -5,6 +5,7 @@ import "@fontsource/courier-prime/400.css";
 import "@fontsource/courier-prime/700.css";
 import "./globals.css";
 import { Providers } from "./providers";
+import { Header } from "@/components/Header";
 
 export const metadata: Metadata = {
   title: "drain't — Wallet drain? Didn't happen.",
@@ -20,7 +21,10 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full antialiased">
       <body className="min-h-full flex flex-col">
-        <Providers>{children}</Providers>
+        <Providers>
+          <Header />
+          {children}
+        </Providers>
       </body>
     </html>
   );
