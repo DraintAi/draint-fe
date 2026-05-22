@@ -96,14 +96,21 @@ export default function HoneypotPage() {
   // any incoming SETH would be drained by CrimeEnjoyorMock's fallback,
   // but value=0 means nothing to drain. Just triggers the warning.
 
-  async function sendTx(label: string, target: `0x${string}`): Promise<void> {
+  async function sendTx(
+    label: string,
+    target: `0x${string}`,
+    /** Optional calldata; defaults to 0x. Pass an owner() selector for the
+     *  enforcer demo so MM's gas simulation doesn't revert (the enforcer has
+     *  no fallback). */
+    data: `0x${string}` = "0x",
+  ): Promise<void> {
     if (!walletClient || !address) return;
     setBusy(label);
     try {
       const hash = await walletClient.sendTransaction({
         to: target,
         value: BigInt(0),
-        data: "0x",
+        data,
       });
       logResult({
         label,
@@ -264,8 +271,11 @@ export default function HoneypotPage() {
             disabled={!onSepolia || busy !== null}
             busy={busy === "tx-safe"}
             label="Call drain't enforcer (safe)"
-            help={`tx.to = ${shortAddr(DRAINT_ENFORCER)} — our verified caveat enforcer. Expect 'drain't verified ✓'.`}
-            onClick={() => sendTx("tx-safe", DRAINT_ENFORCER)}
+            help={`tx.to = ${shortAddr(DRAINT_ENFORCER)} — calls owner() view. Expect drain't safe panel.`}
+            onClick={() =>
+              // owner() selector 0x8da5cb5b — succeeds, returns owner address
+              sendTx("tx-safe", DRAINT_ENFORCER, "0x8da5cb5b")
+            }
           />
           <TriggerCard
             severity="danger"
