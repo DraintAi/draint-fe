@@ -1,13 +1,13 @@
 // drain't backend client.
 //
-// Calls draint-be /api/classify directly. No SDK needed for MVP.
-// In prod the endpoint comes from snap.manifest.json env (TBD), for now hardcoded.
+// The URL is injected at build time via snap.config.ts `environment` field.
+// Default: http://localhost:3001 for local dev. Override with shell env
+// `DRAINT_API_BASE` before running `bun run start` or `bun run build`.
+declare const process: { env: { DRAINT_API_BASE?: string } };
 
 const DRAINT_API_BASE =
-  (typeof (globalThis as Record<string, unknown>).snap !== "undefined" &&
-    ((globalThis as { snap?: { env?: { DRAINT_API_BASE?: string } } }).snap
-      ?.env?.DRAINT_API_BASE)) ||
-  "https://draint-be.vercel.app";
+  (typeof process !== "undefined" && process.env?.DRAINT_API_BASE) ||
+  "http://localhost:3001";
 
 export interface ClassifyResult {
   chainId: number;
@@ -17,7 +17,6 @@ export interface ClassifyResult {
   matchedPattern: string | null;
   reasons: string[];
   classifierVersion: string;
-  // optional Venice verdict + features omitted in Snap type (unused in UI)
 }
 
 export async function classifyAddress(

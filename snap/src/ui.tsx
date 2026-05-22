@@ -151,10 +151,13 @@ export function renderClassifyResult(verdict: ClassifyResult): SnapElement {
   return (
     <Box>
       <Banner severity={banner.severity} title={banner.title}>
-        <Address address={verdict.target} />
+        <Text>drain&rsquo;t classifier verdict</Text>
       </Banner>
 
       <Section>
+        <Row label="Target">
+          <Address address={verdict.target} />
+        </Row>
         <Row label="Risk score">
           <Value
             value={`${(verdict.riskScore * 100).toFixed(0)}%`}

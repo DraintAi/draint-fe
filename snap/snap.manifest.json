@@ -7,7 +7,7 @@
     "url": "git+https://github.com/DraintAi/draint-fe.git"
   },
   "source": {
-    "shasum": "HQTf+BtdqHe6TjAF75GGYsvOfey9Q5/5oqQN+WXZ7OQ=",
+    "shasum": "kdkHxCUzV+PYDvzh1CmUr3Jbyqp1joIM68ayrkB987Y=",
     "location": {
       "npm": {
         "filePath": "dist/bundle.js",
