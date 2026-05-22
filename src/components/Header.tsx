@@ -26,6 +26,12 @@ export function Header() {
           Dashboard
         </Link>
         <Link
+          href="/honeypot"
+          className="hidden md:inline-block text-grunge-blood hover:bg-grunge-mustard/60 px-1 transition-colors"
+        >
+          honeypot
+        </Link>
+        <Link
           href="/snap-test"
           className="hidden md:inline-block text-grunge-sepia hover:bg-grunge-mustard/60 px-1 transition-colors"
         >
