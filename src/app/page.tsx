@@ -51,12 +51,12 @@ export default function Home() {
           {[
             {
               stat: "97%",
-              copy: "of EIP-7702 delegations on mainnet point at malicious sweeper contracts (Wintermute, 2026).",
+              copy: "of EIP-7702 delegations in the wild point at malicious sweeper contracts — the CrimeEnjoyor family.",
               rot: "-rotate-1",
             },
             {
               stat: "450K+",
-              copy: "wallets drained in the six months after Pectra. Same bytecode, copy-pasted across attackers.",
+              copy: "wallets drained since Pectra. Same bytecode, copy-pasted across attackers.",
               rot: "rotate-1",
             },
             {
@@ -101,7 +101,7 @@ export default function Home() {
             {
               n: "03",
               title: "Gasless rescue (1Shot relayer)",
-              copy: "When critical risk is detected, drain&rsquo;t broadcasts a revocation authorization through 1Shot&rsquo;s Permissionless Relayer — gas paid in stablecoin, no race against the attacker for ETH.",
+              copy: "When critical risk is detected, drain&rsquo;t broadcasts a revocation authorization through the 1Shot Permissionless Relayer — gas paid in USDC, zero ETH needed. Proven with a real on-chain rescue on Arbitrum One.",
             },
           ].map((s) => (
             <div
@@ -132,7 +132,7 @@ export default function Home() {
           {[
             "MetaMask Smart Accounts Kit",
             "ERC-7702 / 7710 / 7715",
-            "Venice AI (GLM-5.1)",
+            "Venice AI",
             "1Shot Permissionless Relayer",
           ].map((t) => (
             <div
