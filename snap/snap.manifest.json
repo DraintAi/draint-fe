@@ -1,5 +1,5 @@
 {
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "drain't — Pre-sign warning against EIP-7702 delegation drainers and Permit phishing. Wallet drain? Didn't happen.",
   "proposedName": "drain't",
   "repository": {
@@ -7,7 +7,7 @@
     "url": "git+https://github.com/DraintAi/draint-fe.git"
   },
   "source": {
-    "shasum": "SevICVcXc8dBuxLPEQK/saNoiBbE416sYdO9FyxRNYY=",
+    "shasum": "MuTGARZTU/mZBrekuOI/mhTfFj3dBt6hY28XbfE09UU=",
     "location": {
       "npm": {
         "filePath": "dist/bundle.js",

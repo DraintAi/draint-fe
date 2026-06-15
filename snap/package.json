@@ -1,7 +1,7 @@
 {
   "name": "@draint/snap",
-  "version": "0.1.0",
-  "description": "drain't MetaMask Snap — pre-sign warning for EIP-7702 delegation drainers and Permit phishing. Wallet drain? Didn't happen.",
+  "version": "0.1.1",
+  "description": "drain't MetaMask Snap — pre-sign warnings that stop wallet drainers: EIP-7702 delegations, Permit/Permit2 phishing, and malicious approvals. Wallet drain? Didn't happen.",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/DraintAi/draint-fe.git"
