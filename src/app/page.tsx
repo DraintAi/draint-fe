@@ -20,10 +20,11 @@ export default function Home() {
           </span>
         </h1>
         <p className="text-lg md:text-xl max-w-2xl mb-8 leading-relaxed">
-          drain&rsquo;t is an AI security agent that defends Ethereum wallets
-          from <strong>EIP-7702 delegation drainers</strong> (CrimeEnjoyor
-          family) and <strong>Permit phishing</strong>. Built on MetaMask
-          Smart Accounts Kit, Venice AI, and 1Shot Permissionless Relayer.
+          drain&rsquo;t is an AI security agent that stops wallet drainers —{" "}
+          <strong>EIP-7702 delegations</strong>, <strong>Permit phishing</strong>,
+          and <strong>malicious approvals</strong> — before your funds move.
+          Built on MetaMask Smart Accounts Kit, Venice AI, and 1Shot
+          Permissionless Relayer.
         </p>
         <div className="flex flex-wrap gap-4">
           <Link

@@ -105,8 +105,8 @@ export function renderHome(alerts: AlertEntry[]): SnapElement {
         <Bold>Wallet drain? Didn't happen.</Bold>
       </Text>
       <Text>
-        AI security agent protecting against EIP-7702 delegation drainers
-        and Permit phishing.
+        AI security agent that stops wallet drainers — EIP-7702 delegations,
+        Permit phishing, and malicious approvals — before your funds move.
       </Text>
 
       <Divider />

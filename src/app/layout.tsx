@@ -10,7 +10,7 @@ import { Header } from "@/components/Header";
 export const metadata: Metadata = {
   title: "drain't — Wallet drain? Didn't happen.",
   description:
-    "AI security agent that protects wallets from EIP-7702 delegation drainer attacks. Built on MetaMask Smart Accounts Kit, Venice AI, and 1Shot Permissionless Relayer.",
+    "AI security agent that stops wallet drainers — EIP-7702 delegations, Permit phishing, and malicious approvals — before your funds move. Built on MetaMask Smart Accounts Kit, Venice AI, and 1Shot Permissionless Relayer.",
 };
 
 export default function RootLayout({

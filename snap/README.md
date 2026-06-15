@@ -1,6 +1,6 @@
 # @draint/snap
 
-> **drain't MetaMask Snap** — pre-sign warning against EIP-7702 delegation drainers and Permit/Permit2 phishing.
+> **drain't MetaMask Snap** — pre-sign warnings that stop wallet drainers: EIP-7702 delegations, Permit/Permit2 phishing, and malicious approvals.
 
 Wallet drain? Didn't happen.
 
