@@ -136,8 +136,11 @@ export default function DashboardPage() {
           itself.
         </p>
         <p className="font-serif text-xs text-grunge-sepia mb-4">
-          drain&rsquo;t fires this autonomously on critical detection — below is
-          the manual trigger for the demo.
+          Demo: this triggers a real gasless rescue on drain&rsquo;t&rsquo;s
+          demo wallet (0x7428…eBb1) to show the 1Shot flow end-to-end — no
+          wallet connection needed. In production, drain&rsquo;t fires this
+          autonomously on YOUR monitored wallet via a delegation you
+          pre-authorize.
         </p>
 
         <button
