@@ -94,6 +94,49 @@ export async function postWatch(opts: {
   }
 }
 
+// ─── Gasless rescue (1Shot) ────────────────────────────────────────
+
+export interface OneShotRescueResult {
+  ok: boolean;
+  txHash?: string | null;
+  status?: number | null;
+  explorer?: string | null;
+  victim?: string;
+  recovery?: string;
+  token?: string;
+  sweepAmount?: string;
+  error?: string;
+}
+
+/**
+ * Trigger drain't's gasless rescue (EIP-7710 via 1Shot) on the demo wallet.
+ * The agent normally fires this autonomously on a critical detection — this is
+ * the manual trigger surfaced for the demo. Sweeps to the configured recovery
+ * wallet; gas paid in USDC, zero ETH.
+ */
+export async function triggerOneShotRescue(): Promise<OneShotRescueResult> {
+  const key = process.env.NEXT_PUBLIC_DRAINT_RESCUE_KEY;
+  try {
+    const res = await fetch(`${DRAINT_API_BASE}/api/rescue/oneshot`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        ...(key ? { "x-draint-key": key } : {}),
+      },
+    });
+    const json = (await res.json().catch(() => ({}))) as OneShotRescueResult;
+    if (!res.ok) {
+      return { ok: false, error: json.error ?? `HTTP ${res.status}` };
+    }
+    return json;
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
+}
+
 // ─── Snap helpers ──────────────────────────────────────────────────
 
 type EthereumProvider = {

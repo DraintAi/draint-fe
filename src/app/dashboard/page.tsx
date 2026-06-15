@@ -8,7 +8,9 @@ import {
   fetchWatched,
   severityClass,
   shortAddress,
+  triggerOneShotRescue,
   type AgentIncident,
+  type OneShotRescueResult,
   type WatchedAddress,
 } from "@/lib/draint";
 
@@ -20,6 +22,20 @@ export default function DashboardPage() {
   const [watched, setWatched] = useState<WatchedAddress[]>([]);
   const [loading, setLoading] = useState(true);
   const [lastFetch, setLastFetch] = useState<Date | null>(null);
+  const [rescueState, setRescueState] = useState<
+    "idle" | "running" | "done" | "error"
+  >("idle");
+  const [rescueResult, setRescueResult] = useState<OneShotRescueResult | null>(
+    null,
+  );
+
+  async function runRescue() {
+    setRescueState("running");
+    setRescueResult(null);
+    const r = await triggerOneShotRescue();
+    setRescueResult(r);
+    setRescueState(r.ok ? "done" : "error");
+  }
 
   async function refresh() {
     const [i, w] = await Promise.all([fetchIncidents(20), fetchWatched()]);
@@ -105,6 +121,75 @@ export default function DashboardPage() {
             </Link>
           </div>
         )}
+      </section>
+
+      {/* ─── Gasless Rescue ──────────────────────────────────── */}
+      <section className="mb-12 p-6 bg-grunge-paper border border-grunge-ink/30 rotate-[0.2deg]">
+        <div className="text-xs uppercase tracking-widest text-grunge-sepia mb-3">
+          Gasless Rescue · 1Shot
+        </div>
+        <p className="font-serif text-sm leading-relaxed mb-2">
+          When drain&rsquo;t detects a critical threat, its agent sweeps your
+          funds to a safe recovery wallet — gas paid in{" "}
+          <strong>USDC via the 1Shot Permissionless Relayer</strong>, with{" "}
+          <strong>zero ETH</strong> needed. Even a wallet with no gas can rescue
+          itself.
+        </p>
+        <p className="font-serif text-xs text-grunge-sepia mb-4">
+          drain&rsquo;t fires this autonomously on critical detection — below is
+          the manual trigger for the demo.
+        </p>
+
+        <button
+          type="button"
+          onClick={runRescue}
+          disabled={rescueState === "running"}
+          className="bg-grunge-blood text-grunge-paper font-display text-sm uppercase px-5 py-2.5 border-2 border-grunge-ink -rotate-1 hover:rotate-1 transition-transform disabled:opacity-60 disabled:rotate-0"
+        >
+          {rescueState === "running"
+            ? "Rescuing… building delegation → 1Shot → confirming"
+            : "Run rescue now"}
+        </button>
+
+        {rescueState === "done" && rescueResult?.ok ? (
+          <div className="mt-4 p-4 bg-grunge-olive/20 border border-grunge-olive/50 font-serif text-sm space-y-1">
+            <div className="font-display uppercase text-xs">
+              ✓ Wallet rescued
+            </div>
+            {rescueResult.sweepAmount ? (
+              <div>
+                Swept{" "}
+                <strong>
+                  {(Number(rescueResult.sweepAmount) / 1e6).toFixed(4)} USDC
+                </strong>{" "}
+                to recovery{" "}
+                {rescueResult.recovery
+                  ? shortAddress(rescueResult.recovery)
+                  : ""}
+                .
+              </div>
+            ) : null}
+            <div className="text-grunge-sepia text-xs">
+              gas paid in USDC · zero ETH spent
+            </div>
+            {rescueResult.explorer ? (
+              <a
+                href={rescueResult.explorer}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-block underline break-all"
+              >
+                View on Arbiscan ↗
+              </a>
+            ) : null}
+          </div>
+        ) : null}
+
+        {rescueState === "error" ? (
+          <div className="mt-4 p-4 bg-grunge-blood/15 border border-grunge-blood/50 font-serif text-sm break-all">
+            Rescue failed: {rescueResult?.error ?? "unknown error"}
+          </div>
+        ) : null}
       </section>
 
       {/* ─── Incidents ───────────────────────────────────────── */}
