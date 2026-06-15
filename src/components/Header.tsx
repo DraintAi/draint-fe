@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 
 export function Header() {
@@ -8,9 +9,19 @@ export function Header() {
     <nav className="border-b border-dashed border-grunge-ink/40 px-6 md:px-10 py-4 flex items-center justify-between bg-grunge-paper/80 backdrop-blur-sm sticky top-0 z-50">
       <Link
         href="/"
-        className="font-display text-2xl -rotate-[2deg] inline-block hover:rotate-[1deg] transition-transform"
+        className="group flex items-center gap-2 -rotate-[2deg] hover:rotate-[1deg] transition-transform"
       >
-        drain<span className="bg-grunge-mustard/60 px-0.5">&rsquo;</span>t
+        <Image
+          src="/draint_logo.png"
+          alt="drain't logo"
+          width={36}
+          height={36}
+          priority
+          className="h-9 w-9 mix-blend-multiply"
+        />
+        <span className="font-display text-2xl">
+          drain<span className="bg-grunge-mustard/60 px-0.5">&rsquo;</span>t
+        </span>
       </Link>
       <div className="flex items-center gap-4 md:gap-6 font-sans text-sm uppercase tracking-widest">
         <Link
